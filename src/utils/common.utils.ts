@@ -10,7 +10,7 @@ export class CommonUtils {
         signOptions: { expiresIn: '24h' },
     });
 
-    public static getValuesToken(token: string, key?: string): string {
+    public static getValuesTok(token: string, key?: string): string {
         const removeBearer = token.replace('Bearer ', '');
         const data = this.jwtS.decode(removeBearer);
         const headers = Object.keys(data);
@@ -18,7 +18,7 @@ export class CommonUtils {
         if (headers.find(el => el === key)) {
             return data[key];
         } else {
-            throw new HttpException(`El token no posee el parametro ${key} solicitado.`, HttpStatus.BAD_REQUEST);
+            throw new HttpException(`El token no posee el parametro " ${key} " solicitado.`, HttpStatus.BAD_REQUEST);
         }
     }
 

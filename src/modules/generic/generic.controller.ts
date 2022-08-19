@@ -1,19 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Query, Put, Headers, UseGuards } from '@nestjs/common';
 import { GenericService } from './generic.service';
 import { CreateGenericDto } from './dto/create-generic.dto';
 import { UpdateGenericDto } from './dto/update-generic.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('generic')
 export class GenericController {
   constructor(private readonly genericService: GenericService) { }
 
   @Post()
-  create(@Body() createGenericDto: CreateGenericDto, @Query('validField') validField: string) {
-    return this.genericService.create('generic', createGenericDto, 'abc123', validField);
+  create(@Body() createGenericDto: CreateGenericDto, @Query('validField') validField: string, @Headers() headers) {
+    const tok = headers.authorization;
+    return this.genericService.create('generic', createGenericDto, tok, validField);
   }
 
   @Get()
-  findAll(@Param('entityName') entity, @Query('page') page,
+  findAll(@Query('entity') entity, @Query('page') page,
     @Query('limit') limit, @Query('filter') filter,
     @Query('onlyCount') onlyCount: boolean, @Query('sort') sort: string,
     @Query('sortDirection') sortDirection: number) {
@@ -26,12 +29,14 @@ export class GenericController {
   }
 
   @Put(':id')
-  update(@Body() updateGenericDto: UpdateGenericDto, @Query('validField') validField: string) {
-    return this.genericService.update('generic', updateGenericDto, 'abc123', validField);
+  update(@Body() updateGenericDto: UpdateGenericDto, @Query('validField') validField: string, @Headers() headers) {
+    const tok = headers.authorization;
+    return this.genericService.update('generic', updateGenericDto, tok, validField);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.genericService.remove(id, 'abc123', 'generic', false);
+  remove(@Param('id') id: string, @Headers() headers) {
+    const tok = headers.authorization;
+    return this.genericService.remove(id, tok, 'generic', false);
   }
 }

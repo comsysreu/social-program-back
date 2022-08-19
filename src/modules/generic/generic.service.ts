@@ -4,6 +4,7 @@ import { UpdateGenericDto } from './dto/update-generic.dto';
 import mongoose, { Connection, Schema } from 'mongoose';
 import moment = require('moment-timezone');
 import { QuerysList } from 'src/utils/querys';
+import { CommonUtils } from 'src/utils/common.utils';
 
 @Injectable()
 export class GenericService {
@@ -17,9 +18,10 @@ export class GenericService {
     this.entitySchema.set('toObject', { virtuals: true });
   }
 
-  async create(entity: string, payload: any, token: string, validField: string) {
+  async create(entity: string, payload: any, tok: string, validField: string) {
 
     const dbModel = this.getConnection(entity);
+    console.log(tok);
 
     if (validField)
       await this.reviewData(payload, validField, dbModel, 'new');
@@ -27,11 +29,12 @@ export class GenericService {
     this.entitySchema.add({ key: mongoose.Schema.Types.Mixed });
 
     payload = this.setDates(payload, 'new');
+    payload = this.setAuthor(payload, 'new', tok);
     payload.statusD = 1;
 
-    const logIn = this.prepareLog('POST', null, payload, `Entidad ${entity} Creada`, token, entity);
+    const logIn = this.prepareLog('POST', null, payload, `Entidad ${entity} Creada`, tok, entity);
 
-    await this.createLog({ name: 'test', _id: '123abc123' }, logIn);
+    await this.createLog(this.getDataTok(tok), logIn);
 
     return dbModel.create(payload).catch(err => {
       throw err;
@@ -100,7 +103,7 @@ export class GenericService {
 
   }
 
-  async update(entity: string, payload: any, token: string, validField: string) {
+  async update(entity: string, payload: any, tok: string, validField: string) {
     const dbModel = this.getConnection(entity);
 
     let entityToUpdate;
@@ -110,37 +113,31 @@ export class GenericService {
     else
       entityToUpdate = await this.findOne(payload._id, entity);
 
-    // const user = {
-    //   name: CommonUtils.getValuesToken(token, 'username'),
-    //   _id: CommonUtils.getValuesToken(token, '_id'),
-    // };
-
-    // payload.userModified = user.name;
-
     payload.createAt = (entityToUpdate.toObject())['createAt'];
     payload.updateAt = this.setDates(payload, '');
+    payload = this.setAuthor(payload, '', tok);
 
     const updatedEntity = await dbModel.updateOne({ _id: payload._id }, payload).catch(error => {
       throw error;
     });
 
-    const log = this.prepareLog('PUT', entityToUpdate, payload, `Entidad ${entity} Actualizada`, token, entity);
+    const log = this.prepareLog('PUT', entityToUpdate, payload, `Entidad ${entity} Actualizada`, tok, entity);
 
-    await this.createLog({ name: 'test', _id: '123abc123' }, log);
+    await this.createLog(this.getDataTok(tok), log);
 
     return updatedEntity;
 
   }
 
-  async remove(id: string, token: string, entity: string, permanenty: boolean) {
+  async remove(id: string, tok: string, entity: string, permanenty: boolean) {
 
     const dbModel = this.getConnection(entity);
 
     let entityToDelete = await this.findOne(id, entity);
 
-    const log = this.prepareLog('DELETE', entityToDelete, null, `Entidad ${entity} Eliminada`, token, entity);
+    const log = this.prepareLog('DELETE', entityToDelete, null, `Entidad ${entity} Eliminada`, tok, entity);
 
-    await this.createLog({ name: 'test', _id: '123abc123' }, log);
+    await this.createLog(this.getDataTok(tok), log);
 
     if (permanenty) {
 
@@ -189,6 +186,30 @@ export class GenericService {
 
   }
 
+  public setAuthor(payload: any, type: string, tok: string) {
+
+    const valuesTok = this.getDataTok(tok);
+
+    if (type === 'new') {
+      this.entitySchema.add({ createBy: mongoose.Schema.Types.Mixed });
+      this.entitySchema.add({ updateBy: mongoose.Schema.Types.Mixed });
+      payload.createBy = valuesTok.name;
+      payload.updateBy = valuesTok.name;
+    } else {
+      payload.updateBy = valuesTok.name;
+    }
+
+    return payload;
+
+  }
+
+  getDataTok(tok) {
+    const _id = CommonUtils.getValuesTok(tok, '_id');
+    const name = CommonUtils.getValuesTok(tok, 'username');
+    return { _id, name }
+  }
+
+
   prepareLog(method: string, entityOld: any, entityNew: any, label: string, token: string, entityName: string) {
     const log: any = {};
     log.method = method;
@@ -204,7 +225,7 @@ export class GenericService {
 
   async createLog(user: any, log: any): Promise<any | null> {
     log.createdById = user._id;
-    log.createdBy = `${user.name}`;
+    log.createdBy = user.name;
 
     const dbModel = this.getConnection('entity-logs');
 
@@ -275,6 +296,16 @@ export class GenericService {
                 { lastName: new RegExp(filter, 'i') },
                 { username: new RegExp(filter, 'i') },
                 { 'profile.name': new RegExp(filter, 'i') },
+              ],
+            },
+          }
+        ];
+      } else if (entity === 'profile_permissions') {
+        return [
+          {
+            $match: {
+              $and: [
+                { profileId: Number(filter) },
               ],
             },
           }

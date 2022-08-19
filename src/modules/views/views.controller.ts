@@ -1,15 +1,18 @@
-import { Controller, Get, Post, Body, Param, Delete, Query, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Query, Put, Headers, UseGuards } from '@nestjs/common';
 import { ViewsService } from './views.service';
 import { CreateViewDto } from './dto/create-view.dto';
 import { UpdateViewDto } from './dto/update-view.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('views')
 export class ViewsController {
   constructor(private readonly viewsService: ViewsService) { }
 
   @Post()
-  create(@Body() createViewDto: CreateViewDto) {
-    return this.viewsService.create(createViewDto, '123abc');
+  create(@Body() createViewDto: CreateViewDto, @Headers() headers) {
+    const tok = headers.authorization;
+    return this.viewsService.create(createViewDto, tok);
   }
 
   @Get()
@@ -29,12 +32,14 @@ export class ViewsController {
   }
 
   @Put()
-  update(@Body() updateViewDto: UpdateViewDto) {
-    return this.viewsService.update(updateViewDto, '123abc');
+  update(@Body() updateViewDto: UpdateViewDto, @Headers() headers) {
+    const tok = headers.authorization;
+    return this.viewsService.update(updateViewDto, tok);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.viewsService.remove(id, '123abc');
+  remove(@Param('id') id: string, @Headers() headers) {
+    const tok = headers.authorization;
+    return this.viewsService.remove(id, tok);
   }
 }

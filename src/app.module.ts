@@ -7,6 +7,9 @@ import { GenericModule } from './modules/generic/generic.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { UsersModule } from './modules/users/users.module';
 import { ViewsModule } from './modules/views/views.module';
+import { MedicineModule } from './modules/medicine/medicine.module';
+import { GroceriesModule } from './modules/groceries/groceries.module';
+import { CeilingModule } from './modules/ceiling/ceiling.module';
 
 @Module({
   imports: [
@@ -15,7 +18,10 @@ import { ViewsModule } from './modules/views/views.module';
     ProfilesModule,
     UsersModule,
     ViewsModule,
-    GenericModule
+    GenericModule,
+    MedicineModule,
+    GroceriesModule,
+    CeilingModule
   ],
   controllers: [AppController],
   providers: [AppService],
