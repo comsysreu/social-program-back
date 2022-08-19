@@ -22,4 +22,6 @@ export class CommonUtils {
         }
     }
 
+    public static conn = 'mongodb+srv://reumuni2022:NAAB6mbwpaeaF1N5@cluster0.bjarm.mongodb.net/?retryWrites=true&w=majority';
+
 }
