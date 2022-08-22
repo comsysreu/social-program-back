@@ -209,7 +209,6 @@ export class GenericService {
     return { _id, name }
   }
 
-
   prepareLog(method: string, entityOld: any, entityNew: any, label: string, token: string, entityName: string) {
     const log: any = {};
     log.method = method;
@@ -236,10 +235,6 @@ export class GenericService {
   }
 
   async paginationEntity(pageC: number, limitC: number, entity: string, filter: any, sortField: any, sortDirection: any) {
-
-    // const queryDate = moment.tz(new Date(), 'America/Guatemala');
-
-    // console.log('date query', queryDate);
 
     const { page = 1, limit = 10 } = { page: pageC, limit: limitC };
 
@@ -366,6 +361,17 @@ export class GenericService {
   async getHash(password: string) {
     const { createHmac } = require('crypto');
     return createHmac('sha512', password.toString()).digest('hex');
+  }
+
+  async validProgram(dpi: string, entity: string, program: string) {
+    const dbModel = this.getConnection(entity);
+    const find = await dbModel.find({ dpi }).catch(err => {
+      throw err;
+    });
+
+    if (find.length > 0) {
+      throw new HttpException(`El DPI que intenta registrar, ya pertenece al programa ${program}.`, HttpStatus.BAD_REQUEST);
+    }
   }
 
 }

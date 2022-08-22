@@ -1,1 +1,3 @@
-export class CreateGroceryDto {}
+export class CreateGroceryDto {
+    dpi: string
+}

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GenericService } from '../generic/generic.service';
 import { CreateCeilingDto } from './dto/create-ceiling.dto';
 import { UpdateCeilingDto } from './dto/update-ceiling.dto';
@@ -8,13 +8,27 @@ import { UpdateCeilingDto } from './dto/update-ceiling.dto';
 export class CeilingService {
 
   entity = 'ceiling';
+  entityGroceries = 'groceries';
+  entityMedicine = 'medicine';
 
   constructor(
     private generic: GenericService
   ) {
   }
 
-  create(createCeilingDto: CreateCeilingDto, token: string) {
+  async create(createCeilingDto: CreateCeilingDto, token: string) {
+
+    console.log(Object.keys(createCeilingDto), Object.keys(CreateCeilingDto));
+
+    const dpi = createCeilingDto.dpi;
+
+    if (!dpi) {
+      throw new HttpException(`El campo DPI es requerido para continuar.`, HttpStatus.BAD_REQUEST);
+    }
+
+    await this.generic.validProgram(dpi, this.entityMedicine, 'Medicina');
+    await this.generic.validProgram(dpi, this.entityGroceries, 'Víveres');
+
     return this.generic.create(this.entity, createCeilingDto, token, 'dpi');
   }
 
@@ -25,7 +39,7 @@ export class CeilingService {
   findOne(id: string) {
     return this.generic.findOne(id, this.entity);
   }
-  
+
   update(updateCeilingDto: UpdateCeilingDto, token) {
     return this.generic.update(this.entity, updateCeilingDto, token, 'dpi');
   }

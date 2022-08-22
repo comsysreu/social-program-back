@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GenericService } from '../generic/generic.service';
 import { CreateGroceryDto } from './dto/create-grocery.dto';
 import { UpdateGroceryDto } from './dto/update-grocery.dto';
@@ -7,13 +7,24 @@ import { UpdateGroceryDto } from './dto/update-grocery.dto';
 export class GroceriesService {
 
   entity = 'groceries';
+  entityMedicine = 'medicine';
+  entityCeiling = 'ceiling';
 
   constructor(
     private generic: GenericService
   ) {
   }
-  
-  create(createGroceryDto: CreateGroceryDto, token: string) {
+
+  async create(createGroceryDto: CreateGroceryDto, token: string) {
+
+    const dpi = createGroceryDto.dpi;
+    if (!dpi) {
+      throw new HttpException(`El campo DPI es requerido para continuar.`, HttpStatus.BAD_REQUEST);
+    }
+
+    await this.generic.validProgram(dpi, this.entityCeiling, 'Techo Mínimo');
+    await this.generic.validProgram(dpi, this.entityMedicine, 'Medicina');
+
     return this.generic.create(this.entity, createGroceryDto, token, 'dpi');
   }
 

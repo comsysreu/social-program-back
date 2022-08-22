@@ -1,1 +1,3 @@
-export class CreateMedicineDto {}
+export class CreateMedicineDto {
+    dpi: string;
+}
