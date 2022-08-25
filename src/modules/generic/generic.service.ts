@@ -282,7 +282,7 @@ export class GenericService {
 
     if (filter) {
       if (entity === 'users') {
-        return [
+        query = [
           ...QuerysList.USERS,
           {
             $match: {
@@ -296,11 +296,23 @@ export class GenericService {
           }
         ];
       } else if (entity === 'profile_permissions') {
-        return [
+        query = [
           {
             $match: {
               $and: [
                 { profileId: Number(filter) },
+              ],
+            },
+          }
+        ];
+      } else if (entity === 'groceries' || entity === 'ceiling' || entity === 'medicine') {
+        query = [
+          {
+            $match: {
+              $or: [
+                { fullName: new RegExp(filter, 'i') },
+                { dpi: new RegExp(filter, 'i') },
+                { community: new RegExp(filter, 'i') },
               ],
             },
           }

@@ -1,15 +1,14 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Headers, Query, SerializeOptions, ClassSerializerInterceptor, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, Headers, Query, SerializeOptions, ClassSerializerInterceptor, UseInterceptors, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CeilingService } from './ceiling.service';
 import { CreateCeilingDto } from './dto/create-ceiling.dto';
 import { UpdateCeilingDto } from './dto/update-ceiling.dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('ceiling')
 export class CeilingController {
   constructor(private readonly ceilingService: CeilingService) { }
-
-  // @SerializeOptions({
-  //   excludePrefixes: ['_'],
-  // })
+  
   @UseInterceptors(ClassSerializerInterceptor)
   @Post()
   create(@Body() createCeilingDto: CreateCeilingDto, @Headers() headers) {

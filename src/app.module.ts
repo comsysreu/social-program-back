@@ -10,6 +10,11 @@ import { ViewsModule } from './modules/views/views.module';
 import { MedicineModule } from './modules/medicine/medicine.module';
 import { GroceriesModule } from './modules/groceries/groceries.module';
 import { CeilingModule } from './modules/ceiling/ceiling.module';
+import { CommunityModule } from './modules/community/community.module';
+import { ReligionModule } from './modules/religion/religion.module';
+import { MaritalStatusModule } from './modules/marital-status/marital-status.module';
+import { HousingMaterialModule } from './modules/housing-material/housing-material.module';
+import { AcademicDegreeModule } from './modules/academic-degree/academic-degree.module';
 
 @Module({
   imports: [
@@ -21,7 +26,12 @@ import { CeilingModule } from './modules/ceiling/ceiling.module';
     GenericModule,
     MedicineModule,
     GroceriesModule,
-    CeilingModule
+    CeilingModule,
+    CommunityModule,
+    ReligionModule,
+    MaritalStatusModule,
+    HousingMaterialModule,
+    AcademicDegreeModule
   ],
   controllers: [AppController],
   providers: [AppService],

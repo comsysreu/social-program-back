@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Headers, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, Headers, Query, UseGuards } from '@nestjs/common';
 import { GroceriesService } from './groceries.service';
 import { CreateGroceryDto } from './dto/create-grocery.dto';
 import { UpdateGroceryDto } from './dto/update-grocery.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('groceries')
 export class GroceriesController {
   constructor(private readonly groceriesService: GroceriesService) {}
