@@ -15,6 +15,12 @@ export class UsersController {
     return this.usersService.create(createUserDto, tok);
   }
 
+  @Post('perms')
+  perms(@Headers() headers) {
+    const tok = headers.authorization;
+    return this.usersService.perms(tok);
+  }
+
   @Get()
   findAll(
     @Query('page') page,

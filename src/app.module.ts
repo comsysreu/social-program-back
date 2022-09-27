@@ -15,6 +15,8 @@ import { ReligionModule } from './modules/religion/religion.module';
 import { MaritalStatusModule } from './modules/marital-status/marital-status.module';
 import { HousingMaterialModule } from './modules/housing-material/housing-material.module';
 import { AcademicDegreeModule } from './modules/academic-degree/academic-degree.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { FilesModule } from './modules/files/files.module';
 
 @Module({
   imports: [
@@ -31,9 +33,11 @@ import { AcademicDegreeModule } from './modules/academic-degree/academic-degree.
     ReligionModule,
     MaritalStatusModule,
     HousingMaterialModule,
-    AcademicDegreeModule
+    AcademicDegreeModule,
+    ReportsModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

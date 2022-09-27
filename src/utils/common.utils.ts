@@ -4,7 +4,7 @@ import { jwtConstants } from '../modules/auth/constants';
 import { HttpStatus } from '@nestjs/common';
 
 export class CommonUtils {
-    
+
     public static jwtS = new JwtService({
         secret: jwtConstants.secret,
         signOptions: { expiresIn: '24h' },
@@ -23,5 +23,21 @@ export class CommonUtils {
     }
 
     public static conn = 'mongodb+srv://reumuni2022:NAAB6mbwpaeaF1N5@cluster0.bjarm.mongodb.net/?retryWrites=true&w=majority';
+
+    public static sendFile(res, steam) {
+
+        const routeFile = `./${steam.archivo}`;
+        const fs = require('fs');
+
+        if (!fs.existsSync(`src/uploads/reports/${routeFile}`)) {
+            setTimeout(() => {
+                this.sendFile(res, steam);
+                console.log('No existe el archivo...');
+            }, 1000);
+        } else {
+            console.log('Archivo encontrado...', routeFile);
+            res.sendFile(routeFile, { root: './src/uploads/reports/' });
+        }
+    }
 
 }

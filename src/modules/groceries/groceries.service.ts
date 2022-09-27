@@ -5,21 +5,19 @@ import { UpdateGroceryDto } from './dto/update-grocery.dto';
 
 @Injectable()
 export class GroceriesService {
-
   entity = 'groceries';
   entityMedicine = 'medicine';
   entityCeiling = 'ceiling';
 
-  constructor(
-    private generic: GenericService
-  ) {
-  }
+  constructor(private generic: GenericService) {}
 
   async create(createGroceryDto: CreateGroceryDto, token: string) {
-
     const dpi = createGroceryDto.dpi;
     if (!dpi) {
-      throw new HttpException(`El campo DPI es requerido para continuar.`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `El campo DPI es requerido para continuar.`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     await this.generic.validProgram(dpi, this.entityCeiling, 'Techo Mínimo');
@@ -29,7 +27,15 @@ export class GroceriesService {
   }
 
   findAll(page, limit, filter, sort, sortDirection, onlyCount: boolean) {
-    return this.generic.findAll(this.entity, page, limit, filter, sort, sortDirection, onlyCount);
+    return this.generic.findAll(
+      this.entity,
+      page,
+      limit,
+      filter,
+      sort,
+      sortDirection,
+      onlyCount,
+    );
   }
 
   findOne(id: string) {

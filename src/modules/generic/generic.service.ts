@@ -1,30 +1,28 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { CreateGenericDto } from './dto/create-generic.dto';
-import { UpdateGenericDto } from './dto/update-generic.dto';
 import mongoose, { Connection, Schema } from 'mongoose';
 import moment = require('moment-timezone');
 import { QuerysList } from 'src/utils/querys';
 import { CommonUtils } from 'src/utils/common.utils';
+import { createHmac } from 'crypto';
 
 @Injectable()
 export class GenericService {
-
   entitySchema = new Schema({}, { strict: false, versionKey: false });
 
   constructor(
     @Inject('DB_CONN')
-    private readonly connection: Connection
+    private readonly connection: Connection,
   ) {
     this.entitySchema.set('toObject', { virtuals: true });
   }
 
   async create(entity: string, payload: any, tok: string, validField: string) {
-
     const dbModel = this.getConnection(entity);
     console.log(tok);
 
-    if (validField)
+    if (validField) {
       await this.reviewData(payload, validField, dbModel, 'new');
+    }
 
     this.entitySchema.add({ key: mongoose.Schema.Types.Mixed });
 
@@ -32,55 +30,96 @@ export class GenericService {
     payload = this.setAuthor(payload, 'new', tok);
     payload.statusD = 1;
 
-    const logIn = this.prepareLog('POST', null, payload, `Entidad ${entity} Creada`, tok, entity);
+    const logIn = this.prepareLog(
+      'POST',
+      null,
+      payload,
+      `Entidad ${entity} Creada`,
+      tok,
+      entity,
+    );
 
     await this.createLog(this.getDataTok(tok), logIn);
 
-    return dbModel.create(payload).catch(err => {
+    return dbModel.create(payload).catch((err) => {
       throw err;
     });
   }
 
-  async reviewData(payload, validField, dbModel, type: string): Promise<any | null> {
+  async reviewData(
+    payload,
+    validField,
+    dbModel,
+    type: string,
+  ): Promise<any | null> {
     if (!payload.hasOwnProperty(validField)) {
-      throw new HttpException(`El campo ${validField} no existe en el cuerpo de la peticion`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `El campo ${validField} no existe en el cuerpo de la peticion`,
+        HttpStatus.BAD_REQUEST,
+      );
     } else {
-      let query = { [validField]: payload[validField], statusD: 1 };
+      const query = { [validField]: payload[validField], statusD: 1 };
 
-      const findResults = await dbModel.find(query).catch(err => {
+      console.log(query);
+
+      const findResults = await dbModel.find(query).catch((err) => {
         throw err;
       });
 
+      console.log(findResults);
       if (findResults.length > 0) {
         if (type === 'new') {
-          throw new HttpException(`Ya existe un registro con el valor ${payload[validField]} en el campo ${validField}`, HttpStatus.BAD_REQUEST);
+          throw new HttpException(
+            `Ya existe un registro con el valor ${payload[validField]} en el campo ${validField}`,
+            HttpStatus.BAD_REQUEST,
+          );
         } else {
-
           if (String(payload._id) === String(findResults[0]._id)) {
             return findResults[0];
           } else {
-            throw new HttpException(`No se puede actualizar el registro porque ya existe uno con el mismo valor en el campo ${validField}`, HttpStatus.BAD_REQUEST);
+            throw new HttpException(
+              `No se puede actualizar el registro porque ya existe uno con el mismo valor en el campo ${validField}`,
+              HttpStatus.BAD_REQUEST,
+            );
           }
-
         }
       }
-
     }
   }
 
-  async findAll(entity: string, page: number, limit: number, filter: any, sort: any,
-    sortDirection: number, onlyCount: boolean): Promise<any | null> {
+  async findAll(
+    entity: string,
+    page: number,
+    limit: number,
+    filter: any,
+    sort: any,
+    sortDirection: number,
+    onlyCount: boolean,
+  ): Promise<any | null> {
     if (onlyCount)
-      return { count: await this.getCounts(entity, await this.buildQueryAgregate(filter, sort, sortDirection, entity)) };
-    return this.paginationEntity(page, limit, entity, filter, sort, sortDirection);
+      return {
+        count: await this.getCounts(
+          entity,
+          await this.buildQueryAgregate(filter, sort, sortDirection, entity),
+        ),
+      };
+    return this.paginationEntity(
+      page,
+      limit,
+      entity,
+      filter,
+      sort,
+      sortDirection,
+    );
   }
 
   async findOne(id: string, entity: string) {
     const dbModel = this.getConnection(entity);
 
-    const entityFound = await dbModel.findById(id).catch(err => {
-      if (err.name === 'CastError')
+    const entityFound = await dbModel.findById(id).catch((err) => {
+      if (err.name === 'CastError') {
         err.status = 404;
+      }
       throw err;
     });
 
@@ -95,12 +134,15 @@ export class GenericService {
 
     console.log(JSON.stringify(query));
 
-    return dbModel.aggregate(query).exec().catch(ex => {
-      if (ex.name === 'CastError')
-        ex.status = 404;
-      throw ex;
-    });
-
+    return dbModel
+      .aggregate(query)
+      .exec()
+      .catch((ex) => {
+        if (ex.name === 'CastError') {
+          ex.status = 404;
+        }
+        throw ex;
+      });
   }
 
   async update(entity: string, payload: any, tok: string, validField: string) {
@@ -108,55 +150,80 @@ export class GenericService {
 
     let entityToUpdate;
 
-    if (validField)
-      entityToUpdate = await this.reviewData(payload, validField, dbModel, 'update');
-    else
+    if (validField) {
+      entityToUpdate = await this.reviewData(
+        payload,
+        validField,
+        dbModel,
+        'update',
+      );
+    } else {
       entityToUpdate = await this.findOne(payload._id, entity);
+    }
 
-    payload.createAt = (entityToUpdate.toObject())['createAt'];
+    console.log('entityToUpdate: ', entityToUpdate, validField);
+
+    // rollback createAt in METHOD UPDATE payload.createAt = entityToUpdate.toObject())['createAt'];
+    payload.createAt = entityToUpdate['createAt'];
     payload.updateAt = this.setDates(payload, '');
     payload = this.setAuthor(payload, '', tok);
 
-    const updatedEntity = await dbModel.updateOne({ _id: payload._id }, payload).catch(error => {
-      throw error;
-    });
+    const updatedEntity = await dbModel
+      .updateOne({ _id: payload._id }, payload)
+      .catch((error) => {
+        throw error;
+      });
 
-    const log = this.prepareLog('PUT', entityToUpdate, payload, `Entidad ${entity} Actualizada`, tok, entity);
+    const log = this.prepareLog(
+      'PUT',
+      entityToUpdate,
+      payload,
+      `Entidad ${entity} Actualizada`,
+      tok,
+      entity,
+    );
 
     await this.createLog(this.getDataTok(tok), log);
 
     return updatedEntity;
-
   }
 
   async remove(id: string, tok: string, entity: string, permanenty: boolean) {
-
     const dbModel = this.getConnection(entity);
 
-    let entityToDelete = await this.findOne(id, entity);
+    const entityToDelete = await this.findOne(id, entity);
 
-    const log = this.prepareLog('DELETE', entityToDelete, null, `Entidad ${entity} Eliminada`, tok, entity);
+    const log = this.prepareLog(
+      'DELETE',
+      entityToDelete,
+      null,
+      `Entidad ${entity} Eliminada`,
+      tok,
+      entity,
+    );
 
     await this.createLog(this.getDataTok(tok), log);
 
     if (permanenty) {
-
-      return dbModel.findByIdAndRemove(id).exec().catch(er => {
-        if (er.name === 'CastError')
-          er.status = 404;
-        throw er;
-      });
-
+      return dbModel
+        .findByIdAndRemove(id)
+        .exec()
+        .catch((er) => {
+          if (er.name === 'CastError') {
+            er.status = 404;
+          }
+          throw er;
+        });
     } else {
-
       entityToDelete._doc.statusD = 0;
       entityToDelete._doc.updateAt = this.setDates(entityToDelete, '');
 
-      return dbModel.updateOne({ _id: entityToDelete._id }, entityToDelete).catch(error => {
-        throw error;
-      });
+      return dbModel
+        .updateOne({ _id: entityToDelete._id }, entityToDelete)
+        .catch((error) => {
+          throw error;
+        });
     }
-
   }
 
   public getConnection(entity: string) {
@@ -167,7 +234,6 @@ export class GenericService {
       dbModel = this.connection.model(entity, this.entitySchema);
     }
     return dbModel;
-
   }
 
   public setDates(payload: any, type: string) {
@@ -183,11 +249,9 @@ export class GenericService {
     }
 
     return payload;
-
   }
 
   public setAuthor(payload: any, type: string, tok: string) {
-
     const valuesTok = this.getDataTok(tok);
 
     if (type === 'new') {
@@ -200,16 +264,22 @@ export class GenericService {
     }
 
     return payload;
-
   }
 
   getDataTok(tok) {
     const _id = CommonUtils.getValuesTok(tok, '_id');
     const name = CommonUtils.getValuesTok(tok, 'username');
-    return { _id, name }
+    return { _id, name };
   }
 
-  prepareLog(method: string, entityOld: any, entityNew: any, label: string, token: string, entityName: string) {
+  prepareLog(
+    method: string,
+    entityOld: any,
+    entityNew: any,
+    label: string,
+    token: string,
+    entityName: string,
+  ) {
     const log: any = {};
     log.method = method;
     log.entityOld = JSON.stringify(entityOld);
@@ -228,20 +298,30 @@ export class GenericService {
 
     const dbModel = this.getConnection('entity-logs');
 
-    return dbModel.create(log).catch(err => {
+    return dbModel.create(log).catch((err) => {
       throw err;
     });
-
   }
 
-  async paginationEntity(pageC: number, limitC: number, entity: string, filter: any, sortField: any, sortDirection: any) {
-
+  async paginationEntity(
+    pageC: number,
+    limitC: number,
+    entity: string,
+    filter: any,
+    sortField: any,
+    sortDirection: any,
+  ) {
     const { page = 1, limit = 10 } = { page: pageC, limit: limitC };
 
     let query = [];
 
     if (filter) {
-      query = await this.buildQueryAgregate(filter, sortField, sortDirection, entity);
+      query = await this.buildQueryAgregate(
+        filter,
+        sortField,
+        sortDirection,
+        entity,
+      );
     } else {
       query = await this.buildQuerySample(entity, sortField, sortDirection);
     }
@@ -249,9 +329,11 @@ export class GenericService {
     console.log('END QUERY ========>', JSON.stringify(query));
     const dbModel = this.getConnection(entity);
 
-    const entityList = await dbModel.aggregate(query)
+    const entityList = await dbModel
+      .aggregate(query)
       .limit(limit * page)
-      .skip((page - 1) * limit).catch(err => {
+      .skip((page - 1) * limit)
+      .catch((err) => {
         throw err;
       });
 
@@ -263,11 +345,14 @@ export class GenericService {
       totalRegister: count,
       currentPage: page,
     };
-
   }
 
-  async buildQueryAgregate(filter, sortField, sortDirection, entity: string): Promise<any[]> {
-
+  async buildQueryAgregate(
+    filter,
+    sortField,
+    sortDirection,
+    entity: string,
+  ): Promise<any[]> {
     let sort = {};
     let search = {};
     const status = {
@@ -293,19 +378,21 @@ export class GenericService {
                 { 'profile.name': new RegExp(filter, 'i') },
               ],
             },
-          }
+          },
         ];
       } else if (entity === 'profile_permissions') {
         query = [
           {
             $match: {
               $and: [
-                { profileId: Number(filter) },
+                {
+                  profileId: Number(filter),
+                },
               ],
             },
-          }
+          },
         ];
-      } else if (entity === 'groceries' || entity === 'ceiling' || entity === 'medicine') {
+      } else if (entity === 'groceries') {
         query = [
           {
             $match: {
@@ -315,17 +402,40 @@ export class GenericService {
                 { community: new RegExp(filter, 'i') },
               ],
             },
-          }
+          },
+          {
+            $lookup: {
+              from: 'history-groceries',
+              localField: 'dpi',
+              foreignField: 'dpi',
+              as: 'history',
+            },
+          },
+        ];
+      } else if (entity === 'ceiling' || entity === 'medicine') {
+        query = [
+          {
+            $match: {
+              $or: [
+                { fullName: new RegExp(filter, 'i') },
+                { dpi: new RegExp(filter, 'i') },
+                { community: new RegExp(filter, 'i') },
+              ],
+            },
+          },
         ];
       } else {
         search = { $match: { name: new RegExp(filter, 'i') } };
         query.push(search);
       }
-
     }
 
     if (sortField) {
-      sort = { $sort: { [sortField]: sortDirection ? parseInt(sortDirection) : 1 } };
+      sort = {
+        $sort: {
+          [sortField]: sortDirection ? parseInt(sortDirection) : 1,
+        },
+      };
     } else {
       sort = { $sort: { name: 1 } };
     }
@@ -333,21 +443,35 @@ export class GenericService {
     query.push(sort);
 
     return query;
-
   }
 
   async buildQuerySample(entity, sortField, sortDirection) {
-
     let sort = {};
 
     if (sortField) {
-      sort = { $sort: { [sortField]: sortDirection ? parseInt(sortDirection) : 1 } };
+      sort = {
+        $sort: {
+          [sortField]: sortDirection ? parseInt(sortDirection) : 1,
+        },
+      };
     } else {
       sort = { $sort: { name: 1 } };
     }
 
     if (entity === 'users') {
       return [...QuerysList.USERS, sort];
+    } else if (entity === 'groceries') {
+      return [
+        {
+          $lookup: {
+            from: 'history-groceries',
+            localField: 'dpi',
+            foreignField: 'dpi',
+            as: 'history',
+          },
+        },
+        sort,
+      ];
     } else {
       return [{ $match: { statusD: 1 } }, sort];
     }
@@ -359,11 +483,17 @@ export class GenericService {
     let queryCount = [];
     const count = { $count: 'entityCount' };
 
-    Array.isArray(query) ?
-      query.length > 0 ? queryCount = [...query, count] : queryCount = [count]
-      : queryCount = [query, count];
+    if (Array.isArray(query)) {
+      if (query.length > 0) {
+        queryCount = [...query, count];
+      } else {
+        queryCount = [count];
+      }
+    } else {
+      queryCount = [query, count];
+    }
 
-    const entityCreated = await dbModel.aggregate(queryCount).catch(err => {
+    const entityCreated = await dbModel.aggregate(queryCount).catch((err) => {
       throw err;
     });
 
@@ -371,19 +501,40 @@ export class GenericService {
   }
 
   async getHash(password: string) {
-    const { createHmac } = require('crypto');
     return createHmac('sha512', password.toString()).digest('hex');
   }
 
   async validProgram(dpi: string, entity: string, program: string) {
     const dbModel = this.getConnection(entity);
-    const find = await dbModel.find({ dpi }).catch(err => {
+    const find = await dbModel.find({ dpi }).catch((err) => {
       throw err;
     });
 
     if (find.length > 0) {
-      throw new HttpException(`El DPI que intenta registrar, ya pertenece al programa ${program}.`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `El DPI que intenta registrar, ya pertenece al programa ${program}.`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
+  async findByFieldChunks(
+    entity: string,
+    field: string,
+    id: any,
+    isNum: boolean,
+  ): Promise<any | null> {
+    console.log(isNum);
+    const dbModel = this.getConnection(entity);
+    const entityFound = await dbModel.find({ [field]: id }).catch((erro) => {
+      if (erro.name === 'CastError') {
+        erro.status = 404;
+      }
+      throw erro;
+    });
+    if (!entityFound) {
+      throw new HttpException('Entity Not Found', 404);
+    }
+    return entityFound;
+  }
 }

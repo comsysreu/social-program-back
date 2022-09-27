@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Param, Delete, Query, Put, Headers, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Query,
+  Put,
+  Headers,
+  UseGuards,
+} from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -7,7 +18,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @Controller('profiles')
 export class ProfilesController {
-  constructor(private readonly profilesService: ProfilesService) { }
+  constructor(private readonly profilesService: ProfilesService) {}
 
   @Post()
   create(@Body() createProfileDto: CreateProfileDto, @Headers() headers) {
@@ -28,8 +39,16 @@ export class ProfilesController {
     @Query('filter') filter,
     @Query('sort') sort: string,
     @Query('onlyCount') onlyCount: boolean,
-    @Query('sortDirection') sortDirection: number) {
-    return this.profilesService.findAll(page, limit, filter, sort, sortDirection, onlyCount);
+    @Query('sortDirection') sortDirection: number,
+  ) {
+    return this.profilesService.findAll(
+      page,
+      limit,
+      filter,
+      sort,
+      sortDirection,
+      onlyCount,
+    );
   }
 
   @Get('permissions/:externalId')

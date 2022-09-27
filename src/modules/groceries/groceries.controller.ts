@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Headers, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Headers,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { GroceriesService } from './groceries.service';
 import { CreateGroceryDto } from './dto/create-grocery.dto';
 import { UpdateGroceryDto } from './dto/update-grocery.dto';
@@ -22,8 +33,16 @@ export class GroceriesController {
     @Query('filter') filter,
     @Query('sort') sort: string,
     @Query('onlyCount') onlyCount: boolean,
-    @Query('sortDirection') sortDirection: number) {
-    return this.groceriesService.findAll(page, limit, filter, sort, sortDirection, onlyCount);
+    @Query('sortDirection') sortDirection: number,
+  ) {
+    return this.groceriesService.findAll(
+      page,
+      limit,
+      filter,
+      sort,
+      sortDirection,
+      onlyCount,
+    );
   }
 
   @Get(':id')

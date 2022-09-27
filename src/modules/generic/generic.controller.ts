@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Param, Delete, Query, Put, Headers, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Query,
+  Put,
+  Headers,
+  UseGuards,
+} from '@nestjs/common';
 import { GenericService } from './generic.service';
 import { CreateGenericDto } from './dto/create-generic.dto';
 import { UpdateGenericDto } from './dto/update-generic.dto';
@@ -10,9 +21,18 @@ export class GenericController {
   constructor(private readonly genericService: GenericService) { }
 
   @Post()
-  create(@Body() createGenericDto: CreateGenericDto, @Query('validField') validField: string, @Headers() headers) {
+  create(
+    @Body() createGenericDto: CreateGenericDto,
+    @Query('validField') validField: string,
+    @Headers() headers,
+  ) {
     const tok = headers.authorization;
-    return this.genericService.create('generic', createGenericDto, tok, validField);
+    return this.genericService.create(
+      'generic',
+      createGenericDto,
+      tok,
+      validField,
+    );
   }
 
   @Get()
