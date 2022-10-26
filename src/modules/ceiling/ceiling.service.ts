@@ -3,37 +3,47 @@ import { GenericService } from '../generic/generic.service';
 import { CreateCeilingDto } from './dto/create-ceiling.dto';
 import { UpdateCeilingDto } from './dto/update-ceiling.dto';
 
-
 @Injectable()
 export class CeilingService {
-
   entity = 'ceiling';
   entityGroceries = 'groceries';
   entityMedicine = 'medicine';
 
-  constructor(
-    private generic: GenericService
+  constructor(private generic: GenericService) {}
+
+  async create(
+    createCeilingDto: CreateCeilingDto,
+    token: string,
+    next: string,
   ) {
-  }
-
-  async create(createCeilingDto: CreateCeilingDto, token: string) {
-
     console.log(Object.keys(createCeilingDto), Object.keys(CreateCeilingDto));
-
     const dpi = createCeilingDto.dpi;
 
     if (!dpi) {
-      throw new HttpException(`El campo DPI es requerido para continuar.`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `El campo DPI es requerido para continuar.`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    await this.generic.validProgram(dpi, this.entityMedicine, 'Medicina');
-    await this.generic.validProgram(dpi, this.entityGroceries, 'Víveres');
+    if (next === undefined) {
+      await this.generic.validProgram(dpi, this.entityMedicine, 'Medicina');
+      await this.generic.validProgram(dpi, this.entityGroceries, 'Víveres');
+    }
 
     return this.generic.create(this.entity, createCeilingDto, token, 'dpi');
   }
 
   findAll(page, limit, filter, sort, sortDirection, onlyCount: boolean) {
-    return this.generic.findAll(this.entity, page, limit, filter, sort, sortDirection, onlyCount);
+    return this.generic.findAll(
+      this.entity,
+      page,
+      limit,
+      filter,
+      sort,
+      sortDirection,
+      onlyCount,
+    );
   }
 
   findOne(id: string) {

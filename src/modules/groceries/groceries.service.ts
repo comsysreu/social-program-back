@@ -11,7 +11,11 @@ export class GroceriesService {
 
   constructor(private generic: GenericService) {}
 
-  async create(createGroceryDto: CreateGroceryDto, token: string) {
+  async create(
+    createGroceryDto: CreateGroceryDto,
+    token: string,
+    next: string,
+  ) {
     const dpi = createGroceryDto.dpi;
     if (!dpi) {
       throw new HttpException(
@@ -20,8 +24,10 @@ export class GroceriesService {
       );
     }
 
-    await this.generic.validProgram(dpi, this.entityCeiling, 'Techo Mínimo');
-    await this.generic.validProgram(dpi, this.entityMedicine, 'Medicina');
+    if (next === undefined) {
+      await this.generic.validProgram(dpi, this.entityCeiling, 'Techo Mínimo');
+      await this.generic.validProgram(dpi, this.entityMedicine, 'Medicina');
+    }
 
     return this.generic.create(this.entity, createGroceryDto, token, 'dpi');
   }

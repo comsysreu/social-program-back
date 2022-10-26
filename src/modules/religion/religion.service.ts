@@ -5,20 +5,24 @@ import { UpdateReligionDto } from './dto/update-religion.dto';
 
 @Injectable()
 export class ReligionService {
-
   entity = 'religion';
 
-  constructor(
-    private generic: GenericService
-  ) {
-  }
+  constructor(private generic: GenericService) {}
 
   create(createReligionDto: CreateReligionDto, token: string) {
     return this.generic.create(this.entity, createReligionDto, token, 'name');
   }
 
   findAll(page, limit, filter, sort, sortDirection, onlyCount: boolean) {
-    return this.generic.findAll(this.entity, page, limit, filter, sort, sortDirection, onlyCount);
+    return this.generic.findAll(
+      this.entity,
+      page,
+      limit,
+      filter,
+      sort,
+      sortDirection,
+      onlyCount,
+    );
   }
 
   findOne(id: string) {

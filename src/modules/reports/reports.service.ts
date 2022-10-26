@@ -5,7 +5,7 @@ import fs = require('fs');
 
 @Injectable()
 export class ReportsService {
-  constructor(private generic: GenericService) {}
+  constructor(private generic: GenericService) { }
 
   async findAll(page, limit, filter, sort, sortDirection, onlyCount: boolean) {
     const entity = 'groceries';
@@ -280,6 +280,48 @@ export class ReportsService {
     }
 
     return { successHistory, errorHistory };
+  }
+
+  async historyMedicine(body) {
+    console.log(body);
+
+    const entity = 'history-medicine';
+
+    const dbModel = await this.generic.getConnection(entity);
+
+    const now = new Date();
+
+    const query = [
+      {
+        $match: {
+          date: {
+            $gte: new Date(`${now.getFullYear()}-01-01T00:00:00.000Z`),
+            $lt: new Date(`${now.getFullYear()}-12-31T23:59:59.000Z`),
+          },
+          dpi: '',
+        },
+      },
+    ];
+
+    console.log(body);
+    query[0].$match.dpi = body.dpi;
+
+    console.log('QUERY STRING: ', JSON.stringify(query));
+    const response = await this.generic.findByQuery(entity, query);
+    console.log(response.length);
+
+    if (response.length >= 3) {
+      throw new HttpException(
+        `El ciudadano ${body.fullName} ya tiene 3 ayudas recibidas.`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    body.date = new Date();
+
+    return dbModel.create(body).catch((err) => {
+      throw err;
+    });
   }
 
   createDirectory(): void {

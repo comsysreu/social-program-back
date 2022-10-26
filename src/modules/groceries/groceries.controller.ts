@@ -21,9 +21,13 @@ export class GroceriesController {
   constructor(private readonly groceriesService: GroceriesService) {}
 
   @Post()
-  create(@Body() createGroceryDto: CreateGroceryDto, @Headers() headers) {
+  create(
+    @Body() createGroceryDto: CreateGroceryDto,
+    @Headers() headers,
+    @Query('next') next,
+  ) {
     const tok = headers.authorization;
-    return this.groceriesService.create(createGroceryDto, tok);
+    return this.groceriesService.create(createGroceryDto, tok, next);
   }
 
   @Get()

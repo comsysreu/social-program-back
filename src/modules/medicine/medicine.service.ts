@@ -5,31 +5,43 @@ import { UpdateMedicineDto } from './dto/update-medicine.dto';
 
 @Injectable()
 export class MedicineService {
-
   entity = 'medicine';
   entityCeiling = 'ceiling';
   entityGroceries = 'groceries';
 
-  constructor(
-    private generic: GenericService
+  constructor(private generic: GenericService) {}
+
+  async create(
+    createMedicineDto: CreateMedicineDto,
+    token: string,
+    next: string,
   ) {
-  }
-
-  async create(createMedicineDto: CreateMedicineDto, token: string) {
-
     const dpi = createMedicineDto.dpi;
     if (!dpi) {
-      throw new HttpException(`El campo DPI es requerido para continuar.`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `El campo DPI es requerido para continuar.`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    await this.generic.validProgram(dpi, this.entityCeiling, 'Techo Mínimo');
-    await this.generic.validProgram(dpi, this.entityGroceries, 'Víveres');
+    if (next === undefined) {
+      await this.generic.validProgram(dpi, this.entityCeiling, 'Techo Mínimo');
+      await this.generic.validProgram(dpi, this.entityGroceries, 'Víveres');
+    }
 
     return this.generic.create(this.entity, createMedicineDto, token, 'dpi');
   }
 
   findAll(page, limit, filter, sort, sortDirection, onlyCount: boolean) {
-    return this.generic.findAll(this.entity, page, limit, filter, sort, sortDirection, onlyCount);
+    return this.generic.findAll(
+      this.entity,
+      page,
+      limit,
+      filter,
+      sort,
+      sortDirection,
+      onlyCount,
+    );
   }
 
   findOne(id: string) {

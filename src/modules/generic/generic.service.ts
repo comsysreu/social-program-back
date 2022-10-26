@@ -412,7 +412,7 @@ export class GenericService {
             },
           },
         ];
-      } else if (entity === 'ceiling' || entity === 'medicine') {
+      } else if (entity === 'medicine') {
         query = [
           {
             $match: {
@@ -421,6 +421,34 @@ export class GenericService {
                 { dpi: new RegExp(filter, 'i') },
                 { community: new RegExp(filter, 'i') },
               ],
+            },
+          },
+          {
+            $lookup: {
+              from: 'history-medicines',
+              localField: 'dpi',
+              foreignField: 'dpi',
+              as: 'history',
+            },
+          },
+        ];
+      } else if (entity === 'ceiling') {
+        query = [
+          {
+            $match: {
+              $or: [
+                { fullName: new RegExp(filter, 'i') },
+                { dpi: new RegExp(filter, 'i') },
+                { community: new RegExp(filter, 'i') },
+              ],
+            },
+          },
+          {
+            $lookup: {
+              from: 'history-ceilings',
+              localField: 'dpi',
+              foreignField: 'dpi',
+              as: 'history',
             },
           },
         ];
@@ -465,6 +493,18 @@ export class GenericService {
         {
           $lookup: {
             from: 'history-groceries',
+            localField: 'dpi',
+            foreignField: 'dpi',
+            as: 'history',
+          },
+        },
+        sort,
+      ];
+    } else if (entity === 'medicine') {
+      return [
+        {
+          $lookup: {
+            from: 'history-medicines',
             localField: 'dpi',
             foreignField: 'dpi',
             as: 'history',

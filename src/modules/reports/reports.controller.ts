@@ -52,4 +52,9 @@ export class ReportsController {
   historyGroceries(@Body() body) {
     return this.reportsService.historyGroceries(body);
   }
+
+  @Post('history-medicine')
+  historyMedicine(@Body() body) {
+    return this.reportsService.historyMedicine(body);
+  }
 }
